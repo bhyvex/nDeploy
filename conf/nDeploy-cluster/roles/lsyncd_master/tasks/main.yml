@@ -1,10 +1,9 @@
 ---
-#This playbook will install and setup nDeploy cluster
 
+- name: Setup lsyncd on master
+  template:
+    src: lsyncd.conf.j2
+    dest: /etc/lsyncd.conf
 
-- name: Install nDeploy cluster master packages
-  yum: name={{ item }} enablerepo=ndeploy state=present
-  with_items:
-   - lsyncd
-   - csync2-nDeploy
-   - unison-nDeploy  
+- name: increase fs.inotify.max_user_watches
+  sysctl: name="fs.inotify.max_user_watches" value=1048576 sysctl_set=yes state=present reload=yes

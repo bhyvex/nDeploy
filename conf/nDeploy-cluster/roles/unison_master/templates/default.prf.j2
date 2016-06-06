@@ -1,6 +1,6 @@
 # Unison preferences file
 root = /home
-root = ssh://root@SLAVESERVER:SSHPORT//home
+root = ssh://root@{{ item }}:{{ hostvars[item]['ansible_port'] }}//home
 ignore = Path virtfs
 ignore = Path */mail
 ignore = Path */.cpanel

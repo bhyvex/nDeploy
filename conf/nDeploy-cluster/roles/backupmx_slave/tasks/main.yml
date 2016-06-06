@@ -1,0 +1,17 @@
+---
+
+- name: Stop Exim service
+  service: name=exim state=stopped
+  ignore_errors: yes
+
+- name: remove exim from slave
+  yum: name=exim state=absent
+
+- name: install PostFix server
+  yum: name=postfix state=present
+
+- name: Setup Postfix configuration
+  shell: /opt/nDeploy/scripts/postfix_backupmx_setup.sh
+
+- name: Restart Postfix server
+  service: name=postfix enabled=yes state=restarted

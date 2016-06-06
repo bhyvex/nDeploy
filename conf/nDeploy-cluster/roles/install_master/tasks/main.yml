@@ -1,10 +1,24 @@
 ---
-#This playbook will install and setup nDeploy cluster
 
+- name: Ensure EPEL and nDeploy repo is present
+  yum: name={{ item }} state=present
+  with_items:
+    - nDeploy-release-centos
+    - epel-release
 
-- name: Install nDeploy cluster master packages
-  yum: name={{ item }} enablerepo=ndeploy state=present
+- name: Install nDeploy rpm's on master
+  yum: name={{ item }} enablerepo=ndeploy,epel state=present
   with_items:
    - lsyncd
    - csync2-nDeploy
-   - unison-nDeploy  
+   - unison-nDeploy
+
+- name: Setup nginx config directories on master
+  file: path=/etc/nginx/{{ item }} state=directory
+  with_items:
+    - "{{ groups['ndeployslaves'] }}"
+
+- name: create the ndeploy_cluster_slaves file
+  template:
+    src: ndeploy_cluster_slaves.j2
+    dest: /opt/nDeploy/conf/ndeploy_cluster_slaves

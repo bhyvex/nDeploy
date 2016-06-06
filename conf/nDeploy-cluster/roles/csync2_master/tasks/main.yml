@@ -1,8 +1,20 @@
 ---
-#This playbook will install and setup csync2 on nDeploy master
+  
+- name: Confirm csync2 key file
+  stat:
+    path: /etc/csync2/csync2.key
+  register: csync2_isok
 
 - name: Setup csync2 on master
   shell: csync2 -k /etc/csync2/csync2.key
-  lineinfile: dest=/etc/services line="csync2          30865/tcp               # csync2"
-  template: src=csync2.conf.j2 dest=/etc/csync2/csync2.cfg
-  
+  when: csync2_isok.stat.exists == False
+
+- name: Add csync2 port in services file
+  lineinfile:
+    dest: /etc/services
+    line: "csync2          30865/tcp               # csync2"
+
+- name: Setup csync2 configuration on master
+  template:
+    src: csync2.cfg.j2
+    dest: /etc/csync2/csync2.cfg
