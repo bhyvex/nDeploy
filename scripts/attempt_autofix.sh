@@ -18,12 +18,9 @@ done
 echo -e '\e[93m Attempting to regenerate all nginx conf  \e[0m'
 for CPANELUSER in $(cat /etc/domainusers|cut -d: -f1);do echo "ConfGen:: $CPANELUSER" && /opt/nDeploy/scripts/generate_config.py $CPANELUSER;done
 
-
-#Attempt to re-generate all apache+php-fpm config
-echo -e '\e[93m Attempting to setup php-fpm for apache httpd \e[0m'
-for CPANELUSER in $(cat /etc/domainusers|cut -d: -f1);do echo "ConfGen:: $CPANELUSER" && /opt/nDeploy/scripts/apache_php_config_generator.py $CPANELUSER;done
-
 ##Restart ndeploy_watcher
 echo -e '\e[93m Attempting to restart ndeploy_watcher daemon \e[0m'
 
-systemctl restart ndeploy_watcher || service ndeploy_watcher restart
+service ndeploy_watcher stop || systemctl ndeploy_watcher stop
+rm -f /opt/nDeploy/watcher.pid
+service ndeploy_watcher start || systemctl ndeploy_watcher start

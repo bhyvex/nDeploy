@@ -12,7 +12,6 @@ touch /opt/nDeploy/conf/profiles.yaml
 /opt/nDeploy/scripts/update_profiles.py PROXY 1005 "Proxy+cache to cPanel httpd"
 /opt/nDeploy/scripts/update_profiles.py PROXY 1006 "Proxy+cache to cPanel httpd(SSL)"
 /opt/nDeploy/scripts/update_profiles.py PROXY 1003 "nginX redirect http to https"
-/opt/nDeploy/scripts/update_profiles.py PROXY 1100 "LetsEncrypt"
 /opt/nDeploy/scripts/update_profiles.py NODEJS 4001 "A NodeJS application"
 /opt/nDeploy/scripts/update_profiles.py NODEJS 4002 "Ghost Blog"
 /opt/nDeploy/scripts/update_profiles.py RUBY 2001 "Rack or Ruby on Rails"
@@ -31,6 +30,8 @@ touch /opt/nDeploy/conf/profiles.yaml
 /opt/nDeploy/scripts/update_profiles.py PHP 5020 "OwnCloud"
 /opt/nDeploy/scripts/update_profiles.py PHP 5021 "WHMCS"
 /opt/nDeploy/scripts/update_profiles.py PHP 5022 "Laravel"
+/opt/nDeploy/scripts/update_profiles.py PHP 5023 "Snipe-IT"
+/opt/nDeploy/scripts/update_profiles.py PHP 5024 "Basic Password Protected"
 /opt/nDeploy/scripts/update_profiles.py PHP 5501 "High Performance Wordpress+NAXSI"
 /opt/nDeploy/scripts/update_profiles.py PHP 5002 "Joomla"
 /opt/nDeploy/scripts/update_profiles.py PHP 5003 "Magento"
@@ -55,7 +56,6 @@ echo -e '\e[93m Adding cpanel hooks \e[0m'
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Cpanel --event UAPI::SSL::delete_ssl --stage post --manual --exectype script --escalateprivs
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Cpanel --event UAPI::SSL::install_ssl --stage post --manual --exectype script --escalateprivs
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/reload_nginx.sh --category Stats --event RunAll --stage post --manual
-/usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/reload_nginx.sh --category Stats --event RunUser --stage post --manual
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/runuserstats_hook_post.py --category Stats --event RunUser --stage post --manual
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/reload_watcher.sh --category System --event upcp --stage post --manual
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/accountmodify_hook_pre.py --category Whostmgr --event Accounts::Modify --stage pre --manual
@@ -63,6 +63,8 @@ echo -e '\e[93m Adding cpanel hooks \e[0m'
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/accountremove_hook_pre.py --category Whostmgr --event Accounts::Remove --stage pre --manual
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/accountremove_hook_post.py --category Whostmgr --event Accounts::Remove --stage post --manual
 /usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/accountcreate_hook_post.py --category Whostmgr --event Accounts::Create --stage post --manual
+/usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Whostmgr --event Accounts::suspendacct --stage post --manual
+/usr/local/cpanel/bin/manage_hooks delete script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Whostmgr --event Accounts::unsuspendacct --stage post --manual
 
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Cpanel --event Api2::SubDomain::addsubdomain --stage post --manual --exectype script --escalateprivs
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Cpanel --event Api2::SubDomain::changedocroot --stage post --manual --exectype script --escalateprivs
@@ -75,6 +77,8 @@ echo -e '\e[93m Adding cpanel hooks \e[0m'
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Cpanel --event UAPI::SSL::install_ssl --stage post --manual --exectype script --escalateprivs
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/accountcreate_hook_post.py --category Whostmgr --event Accounts::Create --stage post --manual
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/accountremove_hook_post.py --category Whostmgr --event Accounts::Remove --stage post --manual
+/usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Whostmgr --event Accounts::suspendacct --stage post --manual
+/usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/cpanel_functions_hook_post.py --category Whostmgr --event Accounts::unsuspendacct --stage post --manual
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/reload_watcher.sh --category System --event upcp --stage post --manual
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/reload_nginx.sh --category Stats --event RunAll --stage post --manual
 /usr/local/cpanel/bin/manage_hooks add script /opt/nDeploy/scripts/runuserstats_hook_post.py --category Stats --event RunUser --stage post --manual
@@ -92,12 +96,6 @@ if [ -z "$NVM_DIR" ] ; then
 fi
 if [ ! -d /opt/nDeploy/domain-data ] ; then
 	mkdir /opt/nDeploy/domain-data
-fi
-if [ ! -d /opt/nDeploy/user-data ] ; then
-	mkdir /opt/nDeploy/user-data
-fi
-if [ ! -d /opt/fpmsockets ] ; then
-	mkdir /opt/fpmsockets
 fi
 if [ ! -d /opt/nDeploy/php-fpm.d ] ; then
 	mkdir /opt/nDeploy/php-fpm.d
@@ -120,8 +118,3 @@ fi
 echo -e '\e[93m Installing nDeploy plugin in cPanel \e[0m'
 /usr/local/cpanel/scripts/install_plugin /opt/nDeploy/nDeploy_cp
 /usr/local/cpanel/scripts/install_plugin /opt/nDeploy/nDeploy_cp --theme x3
-#Following 3 lines are left here to remove the Obsolete apache+php-fpm plugin .It might be removed
-#in future versions for cleaning up code.
-echo -e '\e[93m Removing Obsolete Apache_PHP-FPM plugin in cPanel \e[0m'
-/usr/local/cpanel/scripts/uninstall_plugin /opt/nDeploy/apache_fpm_cp.tar
-/usr/local/cpanel/scripts/uninstall_plugin /opt/nDeploy/apache_fpm_cp.tar --theme x3
